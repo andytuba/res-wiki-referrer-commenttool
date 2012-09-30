@@ -43,7 +43,7 @@ modules['wikiReferrer'] = {
 
 
 
-function RESWikiReferrer($textarea) {
+function RESWikiReferrer(controlBox, targetTextArea) {
 	var settings = getSettings();
 
 	function getSettings() {
@@ -59,11 +59,15 @@ function RESWikiReferrer($textarea) {
 
 	var tocProvider = RESWikiReferrer.TableOfContents(settings);
 	var textMangler = RESWikiReferrer.TextMangler(settings);
-	var dialogProvider = RESWikiReferrer.Dialog(settings, null /* todo */, onSelectItem, tocProvider);
-	var commenter = RESWikiReferrer.Commenter(settings, $textarea);
-
+	var dialog = RESWikiReferrer.Dialog(settings, tocProvider);
+	var commenter = RESWikiReferrer.Commenter(settings, targetTextArea);
+	var control = RESWikiReferrer.TextTool(settings, controlBox, onClickControl);
 	// TODO: add toolText EditContent tool to RES comment toolbar
 	// wire up onclick to dialogProvider.toggle
+
+	function onClickControl(evt) {
+		dialog.show()
+	}
 
 	function onSelectItem(tcoItem) {
 		if (!(tcoItem && tcoItem instanceof TableOfContentItem)) {
@@ -77,20 +81,50 @@ function RESWikiReferrer($textarea) {
 	}
 })();
 
-RESWikiReferrer.prototype.Commenter = function(settings, $textarea) {
+RESWikiReferrer.prototype.Commenter = function(settings, targetTextArea) {
 	var commenter() {
 		return commenter.comment.apply(commenter, Arguments.prototype.slice.call(arguments, 0))
 	}
 
 	commenter.comment = function(text) {
-		if (!($textarea && $textarea instanceof jQuery && $textarea.length)) return;
+		if (!targetTextArea) return;
 
-		$textarea.text($textarea.text() + text);
+		prefixSelectionLines(targetTextArea, text);
+		// refreshPreview(preview,targetTextArea);
+		targetTextArea.focus();
+	}
+
+	// Utility function copied from RES
+	function prefixSelectionLines( targetTextArea, prefix )
+	{
+		var scrollTop = targetTextArea.scrollTop;
+		var selectionStart = targetTextArea.selectionStart;
+		var selectionEnd = targetTextArea.selectionEnd;
+
+		var selectedText = targetTextArea.value.substring( selectionStart, selectionEnd );
+
+		var lines = selectedText.split( '\n' );
+
+		var newValue = '';
+
+		for( var i = 0; i < lines.length; i++ )
+		{
+			// newValue += prefix + lines[i] + '\n';
+			newValue += prefix + lines[i];
+			if ( ( i + 1 ) != lines.length ) {newValue += '\n';}
+		}
+
+		targetTextArea.value = 
+			targetTextArea.value.substring( 0, selectionStart ) + //text leading up to the selection start
+			newValue + 
+			targetTextArea.value.substring( selectionEnd ); //text after the selection end
+
+		targetTextArea.scrollTop = scrollTop;
 	}
 }
 
-RESWikiReferrer.prototype.Dialog = function(settings, $reference, onSelect, tocProvider) {
-	var $html;
+RESWikiReferrer.prototype.Dialog = function(settings, tocProvider) {
+	var $html, _onSelect;
 
 	function dialog() {
 		return dialog.create.apply(dialog, Arguments.prototype.slice.call(arguments, 0))
@@ -123,10 +157,13 @@ RESWikiReferrer.prototype.Dialog = function(settings, $reference, onSelect, tocP
 		})
 	}
 
-	dialog.show = function() {
-		if ($reference) {
-			var offset = $reference.offset();
-			offset.top += $reference.height();
+	dialog.show = function($relativeTo, onSelect) {
+		dialog.create();
+		_onSelect = onSelect;
+
+		if ($relativeTo) {
+			var offset = $relativeTo.offset();
+			offset.top += $relativeTo.height();
 		}
 
 		var $select = $html.find('select');
@@ -161,8 +198,8 @@ RESWikiReferrer.prototype.Dialog = function(settings, $reference, onSelect, tocP
 
 		dialog.hide();
 
-		if (!$.isFunction(onSelect)) {
-			onSelect(tocItem);
+		if (!$.isFunction(_onSelect)) {
+			_onSelect(tocItem);
 		}
 	}
 
