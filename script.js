@@ -69,7 +69,7 @@ function RESWikiReferrer($textarea) {
 				href: tcoItem.href
 			})
 
-
+			commenter(commentText)
 		}
 	}
 })();
@@ -94,8 +94,11 @@ RESWikiReferrer.Dialog = function(settings, $reference, onSelect, tocProvider) {
 	}
 	
 	dialog.create = function() {
-		$html = $(dialog.html);
-		$html.appendTo('body');
+		var $html = $("#RESWikiReferrerDialog");
+		if (!$html.length) {
+			$html = $(dialog.html);
+			$html.appendTo('body');
+		}
 
 		$html.css({
 			'position': 'absolute',
@@ -270,7 +273,7 @@ RESWikiReferrer.TableOfContents = function(settings) {
 	}
 
 	tableContents.parseWiki = function(html) {
-		var $html = $(html);
+		var $html = $($(html);
 		var $toc = $html.find(settings.tocSelector).find('li a');
 		if (!$toc.length) return;
 
