@@ -1,3 +1,5 @@
+// This blob is just a prototype 
+
 modules['wikiReferrer'] = {
 	moduleID: 'wikiReferrer',
 	moduleName: 'Wiki Section Link Comment Tool',
@@ -13,7 +15,13 @@ modules['wikiReferrer'] = {
 			type: 'text',
 			value: '.wiki-toc',
 			description: 'jQuery selector for DOM element containing Table(s) of Contents'
-		}
+		},
+		,
+		toolText: {
+			type: 'text',
+			value: 'wiki',
+			description: 'Text to display in toolbar'
+		},
 		refreshAfter: { 
 			type: number,
 			value: 7,
@@ -60,13 +68,12 @@ function RESWikiReferrer(controlBox, targetTextArea) {
 	var tocProvider = RESWikiReferrer.TableOfContents(settings);
 	var textMangler = RESWikiReferrer.TextMangler(settings);
 	var dialog = RESWikiReferrer.Dialog(settings, tocProvider);
-	var commenter = RESWikiReferrer.Commenter(settings, targetTextArea);
-	var control = RESWikiReferrer.TextTool(settings, controlBox, onClickControl);
-	// TODO: add toolText EditContent tool to RES comment toolbar
-	// wire up onclick to dialogProvider.toggle
+	var commenter = RESWikiReferrer.Commenter(settings, addTextToTextarea);
+	var control = RESWikiReferrer.TextControl(settings, controlBox, onClickControl);
+	
 
 	function onClickControl(evt) {
-		dialog.show()
+		dialog.show(control.element, onSelectItem);
 	}
 
 	function onSelectItem(tcoItem) {
@@ -79,20 +86,13 @@ function RESWikiReferrer(controlBox, targetTextArea) {
 			commenter(commentText);
 		}
 	}
-})();
 
-RESWikiReferrer.prototype.Commenter = function(settings, targetTextArea) {
-	var commenter() {
-		return commenter.comment.apply(commenter, Arguments.prototype.slice.call(arguments, 0))
-	}
-
-	commenter.comment = function(text) {
-		if (!targetTextArea) return;
-
-		prefixSelectionLines(targetTextArea, text);
-		// refreshPreview(preview,targetTextArea);
+	function addTextToTextarea(text) {
+		prefixSelectionLines( targetTextArea, text );
+		refreshPreview( preview, targetTextArea );
 		targetTextArea.focus();
 	}
+
 
 	// Utility function copied from RES
 	function prefixSelectionLines( targetTextArea, prefix )
@@ -120,6 +120,43 @@ RESWikiReferrer.prototype.Commenter = function(settings, targetTextArea) {
 			targetTextArea.value.substring( selectionEnd ); //text after the selection end
 
 		targetTextArea.scrollTop = scrollTop;
+	}
+
+	function refreshPreview(preview, targetTextArea) { /* stub */ }
+})();
+
+RESWikiReferrer.prototype.TextControl = function(settings, controlBox, onClickControl) {
+	var textControl = function() {
+		return textControl.create.apply(textControl, Arguments.prototype.slice.call(arguments, 0))		
+	}
+
+	textControl.create = function() {
+		if (!$.isFunction(onClickControl)) return;
+		
+		var $html = $(textControl.html);
+		if (settings.toolText) {
+			$html.text(settings.toolText);
+		}
+
+		$html.appendTo(controlBox);
+
+		$html.click(onClickControl)
+	}
+
+	textControl.html = '<a tabindex="1" href="javascript:;">wiki</a>';
+}
+
+
+
+RESWikiReferrer.prototype.Commenter = function(settings, addTextDelegate) {
+	var commenter() {
+		return commenter.comment.apply(commenter, Arguments.prototype.slice.call(arguments, 0))
+	}
+
+	commenter.comment = function(text) {
+		if (!targetTextArea) return;
+
+		addTextDelegate(text);
 	}
 }
 
