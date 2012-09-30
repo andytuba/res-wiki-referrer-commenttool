@@ -62,6 +62,9 @@ function RESWikiReferrer($textarea) {
 	var dialogProvider = RESWikiReferrer.Dialog(settings, null /* todo */, onSelectItem, tocProvider);
 	var commenter = RESWikiReferrer.Commenter(settings, $textarea);
 
+	// TODO: add toolText EditContent tool to RES comment toolbar
+	// wire up onclick to dialogProvider.toggle
+
 	function onSelectItem(tcoItem) {
 		if (!(tcoItem && tcoItem instanceof TableOfContentItem)) {
 			var commentText = textMangler(settings.macroText, {
@@ -142,6 +145,10 @@ RESWikiReferrer.prototype.Dialog = function(settings, $reference, onSelect, tocP
 
 	dialog.hide = function() {
 		$html.hide();
+	}
+
+	dialog.toggle = function() {
+		$html.toggle();
 	}
 
 	dialog.cancel = function() {
