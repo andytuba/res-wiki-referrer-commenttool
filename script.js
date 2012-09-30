@@ -67,14 +67,14 @@ function RESWikiReferrer($textarea) {
 			var commentText = textMangler(settings.macroText, {
 				name: tcoItem.display,
 				link: tcoItem.href
-			})
+			});
 
-			commenter(commentText)
+			commenter(commentText);
 		}
 	}
 })();
 
-RESWikiReferrer.Commenter = function(settings, $textarea) {
+RESWikiReferrer.prototype.Commenter = function(settings, $textarea) {
 	var commenter() {
 		return commenter.comment.apply(commenter, Arguments.prototype.slice.call(arguments, 0))
 	}
@@ -86,7 +86,7 @@ RESWikiReferrer.Commenter = function(settings, $textarea) {
 	}
 }
 
-RESWikiReferrer.Dialog = function(settings, $reference, onSelect, tocProvider) {
+RESWikiReferrer.prototype.Dialog = function(settings, $reference, onSelect, tocProvider) {
 	var $html;
 
 	function dialog() {
@@ -95,10 +95,11 @@ RESWikiReferrer.Dialog = function(settings, $reference, onSelect, tocProvider) {
 	
 	dialog.create = function() {
 		var $html = $("#RESWikiReferrerDialog");
-		if (!$html.length) {
-			$html = $(dialog.html);
-			$html.appendTo('body');
-		}
+		if ($html.length) return;
+
+		$html = $(dialog.html);
+		$html.appendTo('body');
+	
 
 		$html.css({
 			'position': 'absolute',
@@ -199,7 +200,7 @@ RESWikiReferrer.Dialog = function(settings, $reference, onSelect, tocProvider) {
 }
 
 
-RESWikiReferrer.TextMangler = (settings) {
+RESWikiReferrer.prototype.TextMangler = (settings) {
 	function textMangler() {
 		return textMangler.replaceHolders.apply(textMangler, Array.prototype.slice.call(arguments, 0));
 	}
@@ -218,7 +219,7 @@ RESWikiReferrer.TextMangler = (settings) {
 
 
 
-RESWikiReferrer.TableOfContents = function(settings) {
+RESWikiReferrer.prototype.TableOfContents = function(settings) {
 	var tableContents = function() {
 		return tableContents.mangle.apply(tableContents, Array.prototype.slice.call(arguments, 0));
 	}
