@@ -48,6 +48,7 @@ function RESWikiReferrer() {
 
 	function getSettings() {
 		return {
+			toolText: 'wiki'
 			url: "/r/noahjk/faq",
 			tocSelector: '.wiki-toc',
 			macroText = '\n\n---\n\nMore information can be found in the [%%name%% section of my FAQ](%%link%%)',
@@ -61,8 +62,29 @@ function RESWikiReferrer() {
 	
 })();
 
-RESWikiReferrer.DropdownMenu(settings, $container) {
-	// stub
+RESWikiReferrer.Dialog(settings, $container) {
+	function dialog() {
+		return dialog.create.apply(dialog, Arguments.prototype.slice.call(arguments, 0))
+	}
+	
+	dialog.create = function() {
+		var $html = $(dialog.html);
+		$html.appendTo('body');
+
+		$html.css({
+			'position': 'absolute',
+			'z-index': 50,
+			'display': 'none'
+		});
+
+		
+	}
+
+	dialog.html = ['<div id="RESWikiReferrerDialog" class"res-wiki-referrer-dialog>',
+			'<select></select>' ,
+			'<div><button value="2">cancel</button> <button value="1">ok</button></div>',
+		'</div>',
+		].join('\n');
 
 }
 
