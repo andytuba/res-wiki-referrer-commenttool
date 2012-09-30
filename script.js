@@ -43,7 +43,7 @@ modules['wikiReferrer'] = {
 
 
 
-function RESWikiReferrer() {
+function RESWikiReferrer($textarea) {
 	var settings = getSettings();
 
 	function getSettings() {
@@ -59,11 +59,34 @@ function RESWikiReferrer() {
 
 	var tocProvider = RESWikiReferrer.TableOfContents(settings);
 	var textMangler = RESWikiReferrer.TextMangler(settings);
-	var dialogProvider = RESWikiReferrer.Dialog(tocProvider, null /* todo */, null /* todo */, tocProvider);
-	
+	var dialogProvider = RESWikiReferrer.Dialog(settings, null /* todo */, onSelectItem, tocProvider);
+	var commenter = RESWikiReferrer.Commenter(settings, $textarea);
+
+	function onSelectItem(tcoItem) {
+		if (!(tcoItem && tcoItem instanceof TableOfContentItem)) {
+			var commentText = textMangler(settings.macroText, {
+				name: tcoItem.display,
+				href: tcoItem.href
+			})
+
+
+		}
+	}
 })();
 
-RESWikiReferrer.Dialog(settings, $reference, $textarea, tocProvider) {
+RESWikiReferrer.Commenter = function(settings, $textarea) {
+	var commenter() {
+		return commenter.comment.apply(commenter, Arguments.prototype.slice.call(arguments, 0))
+	}
+
+	commenter.comment = function(text) {
+		if (!($textarea && $textarea instanceof jQuery && $textarea.length)) return;
+
+		$textarea.text($textarea.text() + text);
+	}
+}
+
+RESWikiReferrer.Dialog = function(settings, $reference, onSelect, tocProvider) {
 	var $html;
 
 	function dialog() {
@@ -79,11 +102,25 @@ RESWikiReferrer.Dialog(settings, $reference, $textarea, tocProvider) {
 			'z-index': 50,
 			'display': 'none'
 		});
+
+		$html.live('click', 'button', function(e) {
+			switch (e.target.attr('value')) {
+				case 0:
+					dialog.cancel();
+					break;
+				case 1:
+				default:
+					dialog.select();
+					break;
+			}
+		})
 	}
 
 	dialog.show = function() {
-		var offset = $reference.offset();
-		offset.top += $reference.height();
+		if ($reference) {
+			var offset = $reference.offset();
+			offset.top += $reference.height();
+		}
 
 		var $select = $html.find('select');
 
@@ -99,9 +136,29 @@ RESWikiReferrer.Dialog(settings, $reference, $textarea, tocProvider) {
 		dialog.loaded();
 	}
 
+	dialog.hide = function() {
+		$html.hide();
+	}
+
+	dialog.cancel = function() {
+		dialog.hide();
+	}
+
+	dialog.select = function() {
+		var $selected = $html.find('select option:selected');
+		var tocItem = $selected.data('res-wiki-referrer-item');
+
+		dialog.hide();
+
+		if (!$.isFunction(onSelect)) {
+			onSelect(tocItem);
+		}
+	}
+
 	dialog.populate = function(toc) {
 		toc.forEach(function (element, index, array) {
 			var $option = $('<option></option>', { value: element.href });
+			$option.data('res-wiki-referrer-item', element);
 			$option.text(element.display || element.href);
 			$option.appendTo($select);
 		});
