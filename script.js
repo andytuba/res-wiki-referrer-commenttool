@@ -59,16 +59,19 @@ function RESWikiReferrer() {
 
 	var tocProvider = RESWikiReferrer.TableOfContents(settings);
 	var textMangler = RESWikiReferrer.TextMangler(settings);
+	var dialogProvider = RESWikiReferrer.Dialog(tocProvider, null /* todo */, null /* todo */, tocProvider);
 	
 })();
 
-RESWikiReferrer.Dialog(settings, $container) {
+RESWikiReferrer.Dialog(settings, $reference, $textarea, tocProvider) {
+	var $html;
+
 	function dialog() {
 		return dialog.create.apply(dialog, Arguments.prototype.slice.call(arguments, 0))
 	}
 	
 	dialog.create = function() {
-		var $html = $(dialog.html);
+		$html = $(dialog.html);
 		$html.appendTo('body');
 
 		$html.css({
@@ -76,13 +79,60 @@ RESWikiReferrer.Dialog(settings, $container) {
 			'z-index': 50,
 			'display': 'none'
 		});
-
-		
 	}
 
+	dialog.show = function() {
+		var offset = $reference.offset();
+		offset.top += $reference.height();
+
+		var $select = $html.find('select');
+
+		$html.offset(offset);
+		$html.show();
+
+		if (!$select.children().length) {
+			dialog.loading();
+			tocProvider(dialog.populate, dialog.error);
+			return;
+		}
+
+		dialog.loaded();
+	}
+
+	dialog.populate = function(toc) {
+		toc.forEach(function (element, index, array) {
+			var $option = $('<option></option>', { value: element.href });
+			$option.text(element.display || element.href);
+			$option.appendTo($select);
+		});
+
+		dialog.loaded();
+	};
+
+	dialog.loading = function() {
+		$html.find('.res-wiki-referrer-throbber').show();
+		$html.find('select').hide();
+		$html.find('button[value=1]').attr('disabled', 'disabled');
+	};
+
+	dialog.loaded = function() {
+		$html.find('.res-wiki-referrer-throbber').hide();
+		$html.find('select').show();
+		$html.find('button[value=1]').removeAttr('disabled');
+	};
+
+
+	dialog.error = function() {
+		$html.find('.res-wiki-referrer-throbber').hide();
+		$html.find('select').empty();
+		$html.find('select').after('<div>Well, this is embarrassing.</div>');
+	};
+
+
 	dialog.html = ['<div id="RESWikiReferrerDialog" class"res-wiki-referrer-dialog>',
+			'<div class="res-wiki-referrer-throbber"></div>'
 			'<select></select>' ,
-			'<div><button value="2">cancel</button> <button value="1">ok</button></div>',
+			'<div><button value="0">cancel</button> <button value="1">ok</button></div>',
 		'</div>',
 		].join('\n');
 
