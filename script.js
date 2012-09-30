@@ -66,7 +66,7 @@ function RESWikiReferrer($textarea) {
 		if (!(tcoItem && tcoItem instanceof TableOfContentItem)) {
 			var commentText = textMangler(settings.macroText, {
 				name: tcoItem.display,
-				href: tcoItem.href
+				link: tcoItem.href
 			})
 
 			commenter(commentText)
